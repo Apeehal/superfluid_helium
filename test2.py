@@ -1,6 +1,8 @@
 import numpy as np
 import pyvista as pv
 
+lambda_transition = 2.17
+
 # Pipe parameters for the liquid region (inner cylinder)
 liquid_diameter = 2.0  # Inner liquid diameter (same as before)
 length = 10.0          # Length of the pipe
@@ -149,15 +151,18 @@ mesh["pressure"] = pressure
 velocity = np.zeros((mesh.n_points, 3))  # (vx, vy, vz) for each point
 
 # Initialize scalar fields (pressure and density) for each point
-pressure = np.zeros(mesh.n_points)  # Pressure at each point
 density = np.zeros(mesh.n_points)   # Density at each point
 
 # Assign the physical fields to the mesh
 mesh["velocity_x"] = velocity[:, 0]
 mesh["velocity_y"] = velocity[:, 1]
 mesh["velocity_z"] = velocity[:, 2]
-mesh["pressure"] = pressure
 mesh["density"] = density
+
+
+body_labels = mesh.cell_data["body_label"]
+liquid_body = np.where(body_labels == 1)
+solid_body = np.where(body_labels == 2)
 
 """
 # ===========================
@@ -190,8 +195,7 @@ for i in range(mesh_with_gradient_T.n_cells):
 # ===========================
 
 mesh_with_gradient = mesh.compute_derivative(scalars="pressure", gradient=True)
-print(mesh_with_gradient)
-"""
+
 pressure_gradient = mesh_with_gradient.cell_data["gradient"]
 
 p_gradient_r = pressure_gradient[:, 0]
@@ -202,7 +206,16 @@ p_gradient_z = pressure_gradient[:, 2]
 # Now you have the temperature gradient for each cell
 for i in range(mesh_with_gradient.n_cells):
     print(f"Cell {i} temperature gradient: ({p_gradient_r[i]}, {p_gradient_theta[i]}, {p_gradient_z[i]})")
-"""
+
+
+# ===========================
+# COMPUTE density ratios
+# ===========================
+
+
+normal_to_total_density = (temperature[liquid_body] / lambda_transition)**5.6
+
+superfluid_to_total_density = 
 
 # ===========================
 # Visualization using PyVista
