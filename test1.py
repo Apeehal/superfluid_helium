@@ -4,9 +4,9 @@ import pyvista as pv
 # Pipe parameters
 diameter = 2.0  # Diameter of the pipe
 length = 10.0   # Length of the pipe
-num_theta = 100  # Resolution in theta (number of points around the circumference)
-num_z = 100     # Resolution along the z-axis (length of the pipe)
-num_r = 50      # Resolution in radius (to fill the cylinder)
+num_theta =10  # Resolution in theta (number of points around the circumference)
+num_z = 10    # Resolution along the z-axis (length of the pipe)
+num_r = 5      # Resolution in radius (to fill the cylinder)
 
 # Derived parameters
 radius = diameter / 2
