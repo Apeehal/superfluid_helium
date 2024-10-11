@@ -111,12 +111,29 @@ cells = np.array(cells)
 cell_types = np.full(len(cells), pv.CellType.HEXAHEDRON, dtype=np.uint8)  # Define cell type as HEXAHEDRON
 mesh = pv.UnstructuredGrid(cells, cell_types, points)
 
+
+# ===========================
+# Gravity Vector
+# ===========================
+#g = [9.8, np.pi, z]
+
 # ===========================
 # Compute Cell Volumes
 # ===========================
 volumes = mesh.compute_cell_sizes(volume=True)["Volume"]  # Compute the volume of each cell
 mesh["cell_volume"] = volumes  # Attach the volumes to the mesh
 mesh["body_label"] = np.array(cell_body_labels)  # Label cells with body identifiers (1 for liquid, 2 for solid wall)
+
+
+
+# ===========================
+# Assign Bodies
+# ===========================
+
+body_labels = mesh.cell_data["body_label"]
+liquid_body = np.where(body_labels == 1)
+solid_body = np.where(body_labels == 2)
+
 
 # ===========================
 # Initialize Temperature Field
@@ -143,26 +160,61 @@ pressure[mesh["body_label"] == 2] = 101325    # Liquid region at 1.9K
 mesh["pressure"] = pressure
 
 
+
 # ===========================
-# Initialize Other Physical Properties
+# Initialize Density
+# ===========================
+
+#normal_to_total_density = (temperature[liquid_body] / lambda_transition)**5.6
+
+#superfluid_to_total_density = (1-((temperature[liquid_body] / lambda_transition)**5.6))
+
+#normal_to_superfluid_density = normal_to_total_density/superfluid_to_total_density
+
+#superfluid_density[mesh["body_label" == 1]] = normal_density[liquid_body][0]/(normal_to_total_density*(1/superfluid_to_total_density))
+
+
+normal_density = np.zeros(mesh.n_cells)   # Density at each point
+
+normal_density[mesh["body_label"] == 1] = 147.5 
+mesh["normal_density"] = normal_density
+
+
+
+
+superfluid_density = np.zeros(mesh.n_cells)   # Density at each point
+
+superfluid_density[mesh["body_label"] == 1] = 147.5 
+mesh["superfluid_density"] = superfluid_density
+
+
+
+# ===========================
+# Initialize Entropy
+# ===========================
+
+entropy = np.zeros(mesh.n_cells)
+entropy[mesh["body_label"] == 1] = 1500    # Liquid region at 1.9K
+mesh["pressure"] = pressure
+
+
+
+# ===========================
+# Initialize Velocity
 # ===========================
 
 # Initialize velocity vectors (3D vector for each point)
 velocity = np.zeros((mesh.n_points, 3))  # (vx, vy, vz) for each point
 
 # Initialize scalar fields (pressure and density) for each point
-density = np.zeros(mesh.n_points)   # Density at each point
 
 # Assign the physical fields to the mesh
 mesh["velocity_x"] = velocity[:, 0]
 mesh["velocity_y"] = velocity[:, 1]
 mesh["velocity_z"] = velocity[:, 2]
-mesh["density"] = density
 
 
-body_labels = mesh.cell_data["body_label"]
-liquid_body = np.where(body_labels == 1)
-solid_body = np.where(body_labels == 2)
+
 
 """
 # ===========================
@@ -209,13 +261,27 @@ for i in range(mesh_with_gradient.n_cells):
 
 
 # ===========================
-# COMPUTE density ratios
+# Running Simulation
 # ===========================
 
 
-normal_to_total_density = (temperature[liquid_body] / lambda_transition)**5.6
+#rho_v_s
 
-superfluid_to_total_density = 
+
+
+rho_v_s = superfluid_density * entropy * temperature_gradient - superfluid_to_total_density*pressure_gradient + superfluid_density * g
+
+
+
+#rho_v_n = -superfluid_density * entropy * temperature_gradient - normal_to_total_density * pressure_gradient + eta * delta_v_n + normal_density*g
+
+
+#[solve for 1 step]
+
+#[solve entropy for 1 step]
+
+#solve for heat flux
+
 
 # ===========================
 # Visualization using PyVista
