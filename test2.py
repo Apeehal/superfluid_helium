@@ -165,11 +165,11 @@ mesh["pressure"] = pressure
 # Initialize Density
 # ===========================
 
-#normal_to_total_density = (temperature[liquid_body] / lambda_transition)**5.6
+normal_to_total_density = (temperature[liquid_body] / lambda_transition)**5.6
 
-#superfluid_to_total_density = (1-((temperature[liquid_body] / lambda_transition)**5.6))
+superfluid_to_total_density = (1-((temperature[liquid_body] / lambda_transition)**5.6))
 
-#normal_to_superfluid_density = normal_to_total_density/superfluid_to_total_density
+normal_to_superfluid_density = normal_to_total_density/superfluid_to_total_density
 
 #superfluid_density[mesh["body_label" == 1]] = normal_density[liquid_body][0]/(normal_to_total_density*(1/superfluid_to_total_density))
 
@@ -184,7 +184,10 @@ mesh["normal_density"] = normal_density
 
 superfluid_density = np.zeros(mesh.n_cells)   # Density at each point
 
-superfluid_density[mesh["body_label"] == 1] = 147.5 
+superfluid_density_value = normal_density[liquid_body][0]/(normal_to_total_density*(1/superfluid_to_total_density))
+
+
+superfluid_density[mesh["body_label"] == 1] = superfluid_density_value[0]
 mesh["superfluid_density"] = superfluid_density
 
 
@@ -221,6 +224,8 @@ mesh["velocity_z"] = velocity[:, 2]
 # COMPUTATION
 # ===========================
 """
+timestep = 0.1
+
 
 # ===========================
 # COMPUTE grad T
@@ -228,19 +233,15 @@ mesh["velocity_z"] = velocity[:, 2]
 
 
 mesh_with_gradient_T = mesh.compute_derivative(scalars="temperature", gradient=True)
-print(mesh_with_gradient_T)
 temperature_gradient = mesh_with_gradient_T.cell_data["gradient"]
-print(temperature_gradient)
 
 t_gradient_r = temperature_gradient[:, 0]
 t_gradient_theta = temperature_gradient[:, 1]
 t_gradient_z = temperature_gradient[:, 2]
 
-
 # Now you have the temperature gradient for each cell
-for i in range(mesh_with_gradient_T.n_cells):
-    print(f"Cell {i} temperature gradient: ({t_gradient_r[i]}, {t_gradient_theta[i]}, {t_gradient_z[i]})")
-
+#for i in range(mesh_with_gradient_T.n_cells):
+#    print(f"Cell {i} temperature gradient: ({t_gradient_r[i]}, {t_gradient_theta[i]}, {t_gradient_z[i]})")
 
 # ===========================
 # COMPUTE grad P
@@ -254,33 +255,63 @@ p_gradient_r = pressure_gradient[:, 0]
 p_gradient_theta = pressure_gradient[:, 1]
 p_gradient_z = pressure_gradient[:, 2]
 
-
 # Now you have the temperature gradient for each cell
-for i in range(mesh_with_gradient.n_cells):
-    print(f"Cell {i} temperature gradient: ({p_gradient_r[i]}, {p_gradient_theta[i]}, {p_gradient_z[i]})")
 
+#for i in range(mesh_with_gradient.n_cells):
+#    print(f"Cell {i} temperature gradient: ({p_gradient_r[i]}, {p_gradient_theta[i]}, {p_gradient_z[i]})")
 
 # ===========================
 # Running Simulation
 # ===========================
 
 
-#rho_v_s
+#rho_vs_r = (superfluid_density[liquid_body] * entropy[liquid_body] * t_gradient_r[liquid_body] - (superfluid_density[liquid_body]/(superfluid_density[liquid_body]+normal_density[liquid_body]))*p_gradient_r[liquid_body]) * timestep
+rho_vs_r = np.zeros((mesh.n_cells))  # (vx, vy, vz) for each point
+rho_vs_r[liquid_body] = (superfluid_density[liquid_body] * entropy[liquid_body] * t_gradient_r[liquid_body] - (superfluid_density[liquid_body]/(superfluid_density[liquid_body]+normal_density[liquid_body]))*p_gradient_r[liquid_body]) * timestep
+mesh.cell_data['rho_vs_r'] = rho_vs_r
 
 
 
-rho_v_s = superfluid_density * entropy * temperature_gradient - superfluid_to_total_density*pressure_gradient + superfluid_density * g
+rho_vs_theta = np.zeros((mesh.n_cells))  # (vx, vy, vz) for each point
+rho_vs_theta[liquid_body] = (superfluid_density[liquid_body] * entropy[liquid_body] * t_gradient_theta[liquid_body] - (superfluid_density[liquid_body]/(superfluid_density[liquid_body]+normal_density[liquid_body]))*p_gradient_theta[liquid_body]) * timestep
+mesh.cell_data['rho_vs_theta'] = rho_vs_theta
 
 
 
-#rho_v_n = -superfluid_density * entropy * temperature_gradient - normal_to_total_density * pressure_gradient + eta * delta_v_n + normal_density*g
+rho_vs_z = np.zeros((mesh.n_cells))  # (vx, vy, vz) for each point
+rho_vs_z[liquid_body] = (superfluid_density[liquid_body] * entropy[liquid_body] * t_gradient_z[liquid_body] - (superfluid_density[liquid_body]/(superfluid_density[liquid_body]+normal_density[liquid_body]))*p_gradient_z[liquid_body]) * timestep
+mesh.cell_data['rho_vs_z'] = rho_vs_z
 
 
-#[solve for 1 step]
+print(len(liquid_body[0]))
+print(len(solid_body[0]))
 
-#[solve entropy for 1 step]
 
-#solve for heat flux
+# Assuming 'mesh' is your existing PyVista UnstructuredGrid from the previous code
+
+# Specify the index of the cell you want to highlight (for example, the first cell)
+highlight_cell_index = 360  # Change this to the index of the cell you want to highlight
+
+# Create a scalar array for cell colors
+cell_colors = np.full(mesh.n_cells, 0.5)  # Default color (gray)
+
+# Highlight the specified cell by setting its color to a distinct value (e.g., 1 for red)
+cell_colors[highlight_cell_index] = 1.0  # Highlight color (red)
+
+# Attach the colors to the mesh
+mesh["cell_color"] = cell_colors
+
+# Define colors directly in an RGB format (gray and red)
+# You can set up a colormap manually for the plot
+color_map = np.array([[150, 150, 150],  # Gray for default cells
+                      [255, 0, 0]])     # Red for the highlighted cell
+
+# Create a color array for each cell based on the cell_colors
+colored_cells = np.zeros((mesh.n_cells, 3), dtype=np.uint8)
+for i in range(mesh.n_cells):
+    colored_cells[i] = color_map[int(cell_colors[i])]
+
+
 
 
 # ===========================
@@ -289,5 +320,6 @@ rho_v_s = superfluid_density * entropy * temperature_gradient - superfluid_to_to
 
 # Create a PyVista plotter to visualize the liquid and outer wall, colored by temperature
 plotter = pv.Plotter()
-plotter.add_mesh(mesh, show_edges=True, scalars="temperature", cmap="coolwarm", opacity=0.7)
+plotter.add_mesh(mesh, scalars=colored_cells, show_edges=True, opacity=0.7)
 plotter.show()
+
