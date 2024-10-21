@@ -220,7 +220,6 @@ iterations = 1 # Number of times we want to average temperatures
 for i in range(iterations):
     nodes = temperature_averaging_step(nodes)
 
-
 # Extract temperature values for plotting
 temperature_data = np.array([[node.temperature for node in row] for row in nodes])
 
@@ -238,7 +237,93 @@ plt.ylabel('Y-axis (nodes)')
 plt.show()
 
 
+# Assuming delta_x and delta_y are grid spacings in x and y directions
+delta_x = 1.0  # Assuming uniform grid spacing
+delta_y = 1.0
 
+# Compute the temperature gradient for interior nodes using central differences
+for y in range(1, num_nodes_y - 1):
+    for x in range(1, num_nodes_x - 1):
+        # Central difference for the x-direction (dT/dx)
+        grad_T_x = (nodes[y][x+1].temperature - nodes[y][x-1].temperature) / (2 * delta_x)
+        
+        # Central difference for the y-direction (dT/dy)
+        grad_T_y = (nodes[y+1][x].temperature - nodes[y-1][x].temperature) / (2 * delta_y)
+
+        # Store the temperature gradient as a tuple (dT/dx, dT/dy)
+        nodes[y][x].temperature_gradient = (grad_T_x, grad_T_y)
+
+# Handle boundary nodes (forward or backward differences)
+# Bottom row (excluding corners)
+for x in range(1, num_nodes_x - 1):
+    grad_T_x = (nodes[0][x+1].temperature - nodes[0][x-1].temperature) / (2 * delta_x)
+    grad_T_y = (nodes[1][x].temperature - nodes[0][x].temperature) / delta_y  # Forward difference
+
+    # Store temperature gradient in the node
+    nodes[0][x].temperature_gradient = (grad_T_x, grad_T_y)
+
+# Top row (excluding corners)
+for x in range(1, num_nodes_x - 1):
+    grad_T_x = (nodes[num_nodes_y-1][x+1].temperature - nodes[num_nodes_y-1][x-1].temperature) / (2 * delta_x)
+    grad_T_y = (nodes[num_nodes_y-1][x].temperature - nodes[num_nodes_y-2][x].temperature) / delta_y  # Backward difference
+
+    # Store temperature gradient in the node
+    nodes[num_nodes_y-1][x].temperature_gradient = (grad_T_x, grad_T_y)
+
+# Left column (excluding corners)
+for y in range(1, num_nodes_y - 1):
+    grad_T_x = (nodes[y][1].temperature - nodes[y][0].temperature) / delta_x  # Forward difference
+    grad_T_y = (nodes[y+1][0].temperature - nodes[y-1][0].temperature) / (2 * delta_y)
+
+    # Store temperature gradient in the node
+    nodes[y][0].temperature_gradient = (grad_T_x, grad_T_y)
+
+# Right column (excluding corners)
+for y in range(1, num_nodes_y - 1):
+    grad_T_x = (nodes[y][num_nodes_x-1].temperature - nodes[y][num_nodes_x-2].temperature) / delta_x  # Backward difference
+    grad_T_y = (nodes[y+1][num_nodes_x-1].temperature - nodes[y-1][num_nodes_x-1].temperature) / (2 * delta_y)
+
+    # Store temperature gradient in the node
+    nodes[y][num_nodes_x-1].temperature_gradient = (grad_T_x, grad_T_y)
+
+# Handle corner nodes (e.g., using forward/backward differences)
+# Bottom-left corner
+grad_T_x = (nodes[0][1].temperature - nodes[0][0].temperature) / delta_x  # Forward x
+grad_T_y = (nodes[1][0].temperature - nodes[0][0].temperature) / delta_y  # Forward y
+nodes[0][0].temperature_gradient = (grad_T_x, grad_T_y)
+
+# Bottom-right corner
+grad_T_x = (nodes[0][num_nodes_x-1].temperature - nodes[0][num_nodes_x-2].temperature) / delta_x  # Backward x
+grad_T_y = (nodes[1][num_nodes_x-1].temperature - nodes[0][num_nodes_x-1].temperature) / delta_y  # Forward y
+nodes[0][num_nodes_x-1].temperature_gradient = (grad_T_x, grad_T_y)
+
+# Top-left corner
+grad_T_x = (nodes[num_nodes_y-1][1].temperature - nodes[num_nodes_y-1][0].temperature) / delta_x  # Forward x
+grad_T_y = (nodes[num_nodes_y-1][0].temperature - nodes[num_nodes_y-2][0].temperature) / delta_y  # Backward y
+nodes[num_nodes_y-1][0].temperature_gradient = (grad_T_x, grad_T_y)
+
+# Top-right corner
+grad_T_x = (nodes[num_nodes_y-1][num_nodes_x-1].temperature - nodes[num_nodes_y-1][num_nodes_x-2].temperature) / delta_x  # Backward x
+grad_T_y = (nodes[num_nodes_y-1][num_nodes_x-1].temperature - nodes[num_nodes_y-2][num_nodes_x-1].temperature) / delta_y  # Backward y
+nodes[num_nodes_y-1][num_nodes_x-1].temperature_gradient = (grad_T_x, grad_T_y)
+
+
+
+# Extract x, y coordinates, and temperature gradient values for plotting
+X = np.array([[node.x for node in row] for row in nodes])
+Y = np.array([[node.y for node in row] for row in nodes])
+grad_T_x = np.array([[node.temperature_gradient[0] for node in row] for row in nodes])
+grad_T_y = np.array([[node.temperature_gradient[1] for node in row] for row in nodes])
+
+# Create the quiver plot
+plt.figure(figsize=(8, 6))
+plt.quiver(X, Y, grad_T_x, grad_T_y, scale=5, color='blue')  # scale controls the arrow length
+plt.title('Temperature Gradient (Vector Field)')
+plt.xlabel('X-axis (nodes)')
+plt.ylabel('Y-axis (nodes)')
+plt.gca().invert_yaxis()  # Invert y-axis for consistency with grid layout
+plt.grid(True)
+plt.show()
 
 
 
