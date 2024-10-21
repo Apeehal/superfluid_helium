@@ -111,8 +111,6 @@ for y in range(num_nodes_y):
            
         if x == 0:  # Left boundary
             nodes[y][x].pressure = 101325
-        elif x == num_nodes_x - 1:  # Right boundary
-            nodes[y][x].pressure = 0.101325
 
 
 
@@ -121,8 +119,14 @@ for y in range(num_nodes_y):
 # Start Computation ########
 ############################
 ############################
+"""
+for y in range(num_nodes_y):
+    for x in range(num_nodes_x):
+        #Top and Bottom Nodes
+        if y == 0 and (x != 0 and x != num_nodes_x - 1):
+            print(nodes[y][x].heat_flux)
 
-
+"""
 ############################
 # Solve for Temperatures ###
 ############################
@@ -133,10 +137,11 @@ def temperature_averaging_step(nodes):
 
     new_nodes = [[Node(x, y, node.temperature) for x, node in enumerate(row)] for y, row in enumerate(nodes)]
 
+
     for y in range(num_nodes_y):
         for x in range(num_nodes_x):
             
-
+            #Top and Bottom Nodes
             if y == 0 and (x != 0 and x != num_nodes_x - 1):
                 T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature) / 3
                 k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
@@ -186,37 +191,88 @@ def temperature_averaging_step(nodes):
                 T = T_avg + Q_component*((1*10**-3)**2)/(2*k)
                 new_nodes[y][x].temperature = T
 
+
             #CentralNodes
             if x != 0 and x != num_nodes_x-1 and y != 0 and y != num_nodes_y-1:  
                 T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature)/4
-                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
-                Q_component = nodes[y][x].heat_flux
-                T = T_avg + Q_component*((1*10**-3)**2)/(4*k)
-            
+                T = T_avg 
                 new_nodes[y][x].temperature = T
 
             #right central nodes
             if x == num_nodes_x - 1 and (y != 0 and y != num_nodes_y - 1):
                 T_avg = (nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
-                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
-                Q_component = nodes[y][x].heat_flux
-                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
+                T = T_avg
                 new_nodes[y][x].temperature = T
 
             #left central nodes
             if x == 0 and (y != 0 and y != num_nodes_y - 1):
                 T_avg = (nodes[y][x+1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
-                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
-                Q_component = nodes[y][x].heat_flux
-                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
+                T = T_avg 
                 new_nodes[y][x].temperature = T
 
+            new_nodes[y][x].density_normal = initial_normal_density
+            new_nodes[y][x].density_superfluid = initial_superfluid_density
+            new_nodes[y][x].entropy = initial_entropy
+
+            if y == 0:  # Bottom boundary
+                new_nodes[y][x].heat_flux = 0.2  
+
+            elif y == num_nodes_y - 1:  # Top boundary
+                new_nodes[y][x].heat_flux = 0.2  
+                    
+            else:
+
+                new_nodes[y][x].heat_flux = 0
+
+
+    temperature_field = np.array([[node.temperature for node in row] for row in nodes])
+    grad_T_y, grad_T_x = np.gradient(temperature_field)
+
+    x_mesh = np.arange(num_nodes_x)
+    y_mesh = np.arange(num_nodes_y)
+    X, Y = np.meshgrid(x_mesh, y_mesh)                    
+    plt.figure(figsize=(8, 6))
+    plt.quiver(X, Y, grad_T_x, grad_T_y)
+    plt.title('Temperature Gradient Field')
+    plt.xlabel('X-axis (nodes)')
+    plt.ylabel('Y-axis (nodes)')
+    plt.gca().invert_yaxis()  # Invert y-axis to align with the grid
+    plt.show()
+
+
+    pressure_field = np.array([[node.pressure for node in row] for row in nodes])
+
+    x_mesh = np.arange(num_nodes_x)
+    y_mesh = np.arange(num_nodes_y)
+    X, Y = np.meshgrid(x_mesh, y_mesh)
+
     return new_nodes
+
+"""
+    grad_P_y, grad_P_x = np.gradient(pressure_field)
+
+    plt.figure(figsize=(8, 6))
+    plt.quiver(X, Y, grad_P_x, grad_P_y)
+    plt.title('Pressure Gradient Field')
+    plt.xlabel('X-axis (nodes)')
+    plt.ylabel('Y-axis (nodes)')
+    plt.gca().invert_yaxis()  # Invert y-axis to align with the grid
+    plt.show()
+
+
+    #return new_nodes
+
+"""
+
+
+
+
 
 
 
 # Apply the temperature averaging step for multiple iterations
-iterations = 1 # Number of times we want to average temperatures
+iterations = 2
+ # Number of times we want to average temperatures
 for i in range(iterations):
     nodes = temperature_averaging_step(nodes)
 
@@ -237,6 +293,47 @@ plt.ylabel('Y-axis (nodes)')
 plt.show()
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
 # Assuming delta_x and delta_y are grid spacings in x and y directions
 delta_x = 1.0  # Assuming uniform grid spacing
 delta_y = 1.0
@@ -329,7 +426,16 @@ plt.show()
 
 
 
-"""
+
+
+
+
+
+
+
+
+
+
 
 # Function to apply FDM and calculate next temperature values
 def fdm_step(nodes, alpha, dt, dx, dy):
