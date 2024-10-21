@@ -101,14 +101,14 @@ for y in range(num_nodes_y):
     for x in range(num_nodes_x):
         if y == 0:  # Bottom boundary
             nodes[y][x].heat_flux = 0.2  
+            nodes[y][x].temperature = 2
             #nodes[y][x].temperature = 300
 
         elif y == num_nodes_y - 1:  # Top boundary
             nodes[y][x].heat_flux = 0.2  
-            #nodes[y][x].temperature = 300
+            nodes[y][x].temperature = 2
 
            
-
         if x == 0:  # Left boundary
             nodes[y][x].pressure = 101325
         elif x == num_nodes_x - 1:  # Right boundary
@@ -135,34 +135,7 @@ def temperature_averaging_step(nodes):
 
     for y in range(num_nodes_y):
         for x in range(num_nodes_x):
-
-            #CentralNodes
-            if x != 0 and x != num_nodes_x-1 and y != 0 and y != num_nodes_y-1:  
-                T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature)/4
-                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
-                Q_component = nodes[y][x].heat_flux
-                T = T_avg + Q_component*((1*10**-3)**2)/(4*k)
             
-                new_nodes[y][x].temperature = T
-            
-            #right central nodes
-            if x == num_nodes_x - 1 and (y != 0 and y != num_nodes_y - 1):
-                T_avg = (nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
-                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
-                Q_component = nodes[y][x].heat_flux
-                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
-                new_nodes[y][x].temperature = T
-
-
-
-            #left central nodes
-            if x == 0 and (y != 0 and y != num_nodes_y - 1):
-                T_avg = (nodes[y][x+1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
-                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
-                Q_component = nodes[y][x].heat_flux
-                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
-                new_nodes[y][x].temperature = T
-
 
             if y == 0 and (x != 0 and x != num_nodes_x - 1):
                 T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature) / 3
@@ -170,7 +143,6 @@ def temperature_averaging_step(nodes):
                 Q_component = nodes[y][x].heat_flux
                 T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
                 new_nodes[y][x].temperature = T
-
 
 
             if y == num_nodes_y-1  and (x != 0 and x != num_nodes_x - 1):
@@ -185,7 +157,6 @@ def temperature_averaging_step(nodes):
             if x==0 and y==0:
                 T_avg = (nodes[y][x+1].temperature + nodes[y+1][x].temperature)/2
                 k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
-                print(k)
                 Q_component = nodes[y][x].heat_flux
                 T = T_avg + Q_component*((1*10**-3)**2)/(2*k)
                 new_nodes[y][x].temperature = T
@@ -215,6 +186,31 @@ def temperature_averaging_step(nodes):
                 T = T_avg + Q_component*((1*10**-3)**2)/(2*k)
                 new_nodes[y][x].temperature = T
 
+            #CentralNodes
+            if x != 0 and x != num_nodes_x-1 and y != 0 and y != num_nodes_y-1:  
+                T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature)/4
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(4*k)
+            
+                new_nodes[y][x].temperature = T
+
+            #right central nodes
+            if x == num_nodes_x - 1 and (y != 0 and y != num_nodes_y - 1):
+                T_avg = (nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
+                new_nodes[y][x].temperature = T
+
+            #left central nodes
+            if x == 0 and (y != 0 and y != num_nodes_y - 1):
+                T_avg = (nodes[y][x+1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
+                new_nodes[y][x].temperature = T
+
     return new_nodes
 
 
@@ -223,19 +219,6 @@ def temperature_averaging_step(nodes):
 iterations = 1 # Number of times we want to average temperatures
 for i in range(iterations):
     nodes = temperature_averaging_step(nodes)
-
-# Simulation parameters
-iterations = 1  # Number of iterations
-dx = dy = 1     # Grid spacing
-
-# Perform one step of temperature averaging
-nodes = temperature_averaging_step(nodes)
-
-# Calculate the temperature gradient after one iteration
-grad_x, grad_y = compute_temperature_gradient(nodes)
-
-
-
 
 
 # Extract temperature values for plotting
