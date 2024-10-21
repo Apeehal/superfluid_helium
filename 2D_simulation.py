@@ -13,6 +13,7 @@ num_nodes_y = 40  # Number of nodes in the y-direction
 grid = [(x, y) for y in range(num_nodes_y) for x in range(num_nodes_x)]
 
 lambda_transition = 2.17
+viscosity = (3.5*10)**-6 #assume constant viscosity
 
 class Node:
     def __init__(self, x, y, heat_flux=(0.0,0.0), temperature=0.0, temperature_gradient=(0.0,0.0), pressure=0.0, pressure_gradient=(0.0,0.0), velocity_normal=(0.0, 0.0), velocity_superfluid=(0.0,0.0), density_normal=0.0, density_superfluid=0.0, entropy=0.0):
@@ -44,7 +45,7 @@ nodes = [[Node(x, y) for x in range(num_nodes_x)] for y in range(num_nodes_y)]
 # Assign Initial Conditions
 ############################
 
-initial_temperature = 100
+initial_temperature = 1.9
 for row in nodes:
     for node in row:
         node.temperature = initial_temperature
@@ -100,11 +101,11 @@ for y in range(num_nodes_y):
     for x in range(num_nodes_x):
         if y == 0:  # Bottom boundary
             nodes[y][x].heat_flux = 0.2  
-            nodes[y][x].temperature = 300
+            #nodes[y][x].temperature = 300
 
         elif y == num_nodes_y - 1:  # Top boundary
             nodes[y][x].heat_flux = 0.2  
-            nodes[y][x].temperature = 300
+            #nodes[y][x].temperature = 300
 
            
 
@@ -112,9 +113,6 @@ for y in range(num_nodes_y):
             nodes[y][x].pressure = 101325
         elif x == num_nodes_x - 1:  # Right boundary
             nodes[y][x].pressure = 0.101325
-
-
-
 
 
 
@@ -129,9 +127,6 @@ for y in range(num_nodes_y):
 # Solve for Temperatures ###
 ############################
 
-if x != 0 and x != num_nodes_x-1 and y != range(1, num_nodes_y):
-    print(y)
-
 
 
 def temperature_averaging_step(nodes):
@@ -144,62 +139,108 @@ def temperature_averaging_step(nodes):
             #CentralNodes
             if x != 0 and x != num_nodes_x-1 and y != 0 and y != num_nodes_y-1:  
                 T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature)/4
-                #k = 
-                #Q_component = 
-                #T = 
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(4*k)
             
-                new_nodes[y][x].temperature = T_avg
+                new_nodes[y][x].temperature = T
             
             #right central nodes
             if x == num_nodes_x - 1 and (y != 0 and y != num_nodes_y - 1):
                 T_avg = (nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
-                new_nodes[y][x].temperature = T_avg
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
+                new_nodes[y][x].temperature = T
+
+
 
             #left central nodes
             if x == 0 and (y != 0 and y != num_nodes_y - 1):
                 T_avg = (nodes[y][x+1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
-                new_nodes[y][x].temperature = T_avg
-            
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
+                new_nodes[y][x].temperature = T
+
 
             if y == 0 and (x != 0 and x != num_nodes_x - 1):
                 T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature) / 3
-                new_nodes[y][x].temperature = T_avg
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
+                new_nodes[y][x].temperature = T
+
 
 
             if y == num_nodes_y-1  and (x != 0 and x != num_nodes_x - 1):
                 T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y-1][x].temperature) / 3
-                new_nodes[y][x].temperature = T_avg
-
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(3*k)
+                new_nodes[y][x].temperature = T
 
 
             #corner nodes
             if x==0 and y==0:
                 T_avg = (nodes[y][x+1].temperature + nodes[y+1][x].temperature)/2
-                new_nodes[y][x].temperature = T_avg
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                print(k)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(2*k)
+                new_nodes[y][x].temperature = T
+
+
 
             if x==0 and y==num_nodes_y-1:
                 T_avg = (nodes[y-1][x].temperature + nodes[y][x+1].temperature)/2
-                new_nodes[y][x].temperature = T_avg
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(2*k)
+                new_nodes[y][x].temperature = T
+
 
             if x==num_nodes_x-1 and y==0:
                 T_avg = (nodes[y][x-1].temperature + nodes[y+1][x].temperature)/2
-                new_nodes[y][x].temperature = T_avg
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(2*k)
+                new_nodes[y][x].temperature = T
+
 
             if x==num_nodes_x-1 and y==num_nodes_y-1:
                 T_avg = (nodes[y-1][x].temperature + nodes[y][x-1].temperature)/2
-                new_nodes[y][x].temperature = T_avg             
-    
+                k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+                Q_component = nodes[y][x].heat_flux
+                T = T_avg + Q_component*((1*10**-3)**2)/(2*k)
+                new_nodes[y][x].temperature = T
+
     return new_nodes
 
 
 
 # Apply the temperature averaging step for multiple iterations
-iterations = 10 # Number of times we want to average temperatures
+iterations = 1 # Number of times we want to average temperatures
 for i in range(iterations):
     nodes = temperature_averaging_step(nodes)
 
+# Simulation parameters
+iterations = 1  # Number of iterations
+dx = dy = 1     # Grid spacing
+
+# Perform one step of temperature averaging
+nodes = temperature_averaging_step(nodes)
+
+# Calculate the temperature gradient after one iteration
+grad_x, grad_y = compute_temperature_gradient(nodes)
+
+
+
+
+
 # Extract temperature values for plotting
 temperature_data = np.array([[node.temperature for node in row] for row in nodes])
+
 # Plot the temperature distribution
 plt.figure(figsize=(8, 6))
 plt.imshow(temperature_data, cmap='hot', interpolation='nearest', origin='lower')
@@ -212,6 +253,8 @@ plt.ylabel('Y-axis (nodes)')
 
 # Show the plot
 plt.show()
+
+
 
 
 
@@ -268,6 +311,28 @@ plt.show()
 
 
 
+
+# Extract temperature values into a 2D array
+heat_flux_data = np.array([[node.heat_flux for node in row] for row in nodes])
+
+# Plot the temperature
+plt.figure(figsize=(8, 6))
+plt.imshow(heat_flux_data, cmap='hot', interpolation='nearest', origin='lower')
+
+# Add color bar
+plt.colorbar(label='Pressure (Pa)')
+
+# Add labels and title
+plt.title('Temperature Distribution with Global Initial Condition')
+plt.xlabel('X-axis (nodes)')
+plt.ylabel('Y-axis (nodes)')
+
+# Set ticks for better readability
+plt.xticks(ticks=np.arange(num_nodes_x), labels=np.arange(num_nodes_x))
+plt.yticks(ticks=np.arange(num_nodes_y), labels=np.arange(num_nodes_y))
+
+# Show the plot
+plt.show()
 
 
 
