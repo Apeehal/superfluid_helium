@@ -141,6 +141,7 @@ def temperature_averaging_step(nodes):
     for y in range(num_nodes_y):
         for x in range(num_nodes_x):
 
+            #CentralNodes
             if x != 0 and x != num_nodes_x-1 and y != 0 and y != num_nodes_y-1:  
                 T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature)/4
                 #k = 
@@ -149,20 +150,51 @@ def temperature_averaging_step(nodes):
             
                 new_nodes[y][x].temperature = T_avg
             
+            #right central nodes
             if x == num_nodes_x - 1 and (y != 0 and y != num_nodes_y - 1):
                 T_avg = (nodes[y][x-1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
                 new_nodes[y][x].temperature = T_avg
 
+            #left central nodes
             if x == 0 and (y != 0 and y != num_nodes_y - 1):
                 T_avg = (nodes[y][x+1].temperature + nodes[y+1][x].temperature + nodes[y-1][x].temperature) / 3
                 new_nodes[y][x].temperature = T_avg
+            
+
+            if y == 0 and (x != 0 and x != num_nodes_x - 1):
+                T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature) / 3
+                new_nodes[y][x].temperature = T_avg
+
+
+            if y == num_nodes_y-1  and (x != 0 and x != num_nodes_x - 1):
+                T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y-1][x].temperature) / 3
+                new_nodes[y][x].temperature = T_avg
+
+
+
+            #corner nodes
+            if x==0 and y==0:
+                T_avg = (nodes[y][x+1].temperature + nodes[y+1][x].temperature)/2
+                new_nodes[y][x].temperature = T_avg
+
+            if x==0 and y==num_nodes_y-1:
+                T_avg = (nodes[y-1][x].temperature + nodes[y][x+1].temperature)/2
+                new_nodes[y][x].temperature = T_avg
+
+            if x==num_nodes_x-1 and y==0:
+                T_avg = (nodes[y][x-1].temperature + nodes[y+1][x].temperature)/2
+                new_nodes[y][x].temperature = T_avg
+
+            if x==num_nodes_x-1 and y==num_nodes_y-1:
+                T_avg = (nodes[y-1][x].temperature + nodes[y][x-1].temperature)/2
+                new_nodes[y][x].temperature = T_avg             
     
     return new_nodes
 
 
 
 # Apply the temperature averaging step for multiple iterations
-iterations = 2 # Number of times we want to average temperatures
+iterations = 10 # Number of times we want to average temperatures
 for i in range(iterations):
     nodes = temperature_averaging_step(nodes)
 
