@@ -27,6 +27,7 @@ class Node:
         c_p = 5000  # Specific heat constant
         total_density = (self.density_superfluid + self.density_normal)
         alpha = self.k / (total_density * c_p)
+        print(alpha)
         return alpha
 
 # Define grid dimensions
@@ -88,7 +89,6 @@ def fdm_step(nodes, dt, dx, dy):
             T_yy = (nodes[y+1][x].temperature - 2 * nodes[y][x].temperature + nodes[y-1][x].temperature) / dy**2
             alpha_local = nodes[y][x].alpha  # Use local alpha value
             new_nodes[y][x].temperature = nodes[y][x].temperature + alpha_local * dt * (T_xx + T_yy)
-            print(T_xx)
     
     # Left and right boundaries (assuming no flux for simplicity, can be adjusted if needed)
     for y in range(num_nodes_y):
