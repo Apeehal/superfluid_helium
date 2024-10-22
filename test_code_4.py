@@ -35,9 +35,9 @@ class Node:
 num_nodes_x = 60
 num_nodes_y = 40
 dx = dy = 0.01  # Spatial step (assuming uniform grid)
-dt = 0.1       # Time step size
+dt = 0.001       # Time step size
 time_steps = 10  # Number of time steps
-q_top = 20   # Heat flux at the top boundary
+q_top = 20  # Heat flux at the top boundary
 q_bottom = 20 # Heat flux at the bottom boundary
 
 
@@ -68,10 +68,10 @@ def apply_neumann_bc(nodes, q_top, q_bottom, dy):
 
     # Top boundary (specified heat flux q_top)
     for x in range(num_nodes_x):
-        T_interior = nodes[num_nodes_y - 1][x].temperature  # Last interior node below the boundary
-        k_local = nodes[num_nodes_y - 1][x].k  # Use local k value for boundary node
-        nodes[num_nodes_y - 1][x].temperature = T_interior + (q_top * dy) / k_local  # Apply Neumann BC for top boundary
-        print(T_interior)
+        T_interior = nodes[num_nodes_y - 2][x].temperature  # Last interior node below the boundary
+        k_local = nodes[num_nodes_y -1][x].k  # Use local k value for boundary node
+        nodes[num_nodes_y-1][x].temperature = T_interior + (q_top * dy) / k_local  # Apply Neumann BC for top boundary
+        
 
 # Function to apply FDM and calculate next temperature values with varying k, alpha, and Neumann BCs
 def fdm_step(nodes, dt, dx, dy):
