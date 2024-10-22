@@ -90,7 +90,8 @@ def fdm_step(nodes, dt, dx, dy, q_top, q_bottom):
             T_yy = (nodes[y+1][x].temperature - 2 * nodes[y][x].temperature + nodes[y-1][x].temperature) / dy**2
             alpha_local = nodes[y][x].alpha  # Use local alpha value
             new_nodes[y][x].temperature = nodes[y][x].temperature + alpha_local * dt * (T_xx + T_yy)
-    
+
+   
 
 
     #for y in range(num_nodes_y):
