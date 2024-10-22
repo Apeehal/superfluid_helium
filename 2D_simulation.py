@@ -70,6 +70,7 @@ for row in nodes:
 
 
 initial_superfluid_density = (initial_normal_density/((initial_temperature/lambda_transition)**5.6)) - initial_normal_density
+print(initial_superfluid_density)
 for row in nodes:
     for node in row:
         node.density_superfluid = initial_superfluid_density
