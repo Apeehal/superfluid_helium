@@ -16,11 +16,10 @@ lambda_transition = 2.17
 #viscosity = (3.5*10)**-6 #assume constant viscosity
 viscosity = 2.5*10**-6
 class Node:
-    def __init__(self, x, y, heat_flux=(0.0,0.0), temperature=0.0, temperature_gradient=(0.0,0.0), pressure=0.0, pressure_gradient=(0.0,0.0), velocity_normal=(0.0, 0.0), velocity_superfluid=(0.0,0.0), density_normal=0.0, density_superfluid=0.0, entropy=0.0):
+    def __init__(self, x, y, temperature=0.0, temperature_gradient=(0.0,0.0), pressure=0.0, pressure_gradient=(0.0,0.0), velocity_normal=(0.0, 0.0), velocity_superfluid=(0.0,0.0), density_normal=0.0, density_superfluid=0.0, entropy=0.0, heat_flux = 0.0):
     
         self.x = x
         self.y = y
-        self.heat_flux = heat_flux
         self.temperature = temperature
         self.temperature_gradient = temperature_gradient
         self.pressure = pressure
@@ -30,10 +29,11 @@ class Node:
         self.density_normal = density_normal
         self.density_superfluid = density_superfluid
         self.entropy = entropy
+        self.heat_flux = heat_flux
 
 
     def __repr__(self):
-        return f"Node({self.x}, {self.y}, q={self.heat_flux}, T={self.temperature}, grad_T={self.temperature_gradient}, P={self.pressure}, grad_P={self.pressure_gradient}, v_n={self.velocity_normal}, v_s={self.velocity_superfluid}, rho_n={self.density_normal}, rho_s={self.density_superfluid}, s={self.entropy})"
+        return f"Node({self.x}, {self.y}, T={self.temperature}, grad_T={self.temperature_gradient}, P={self.pressure}, grad_P={self.pressure_gradient}, v_n={self.velocity_normal}, v_s={self.velocity_superfluid}, rho_n={self.density_normal}, rho_s={self.density_superfluid}, s={self.entropy}, q={self.heat_flux})"
 
 
 
@@ -76,12 +76,6 @@ for row in nodes:
 
 
 
-initial_heat_flux = 0
-for row in nodes:
-    for node in row:
-        node.heat_flux = initial_heat_flux
-
-
 initial_normal_velocity = (0,0)
 for row in nodes:
     for node in row:
@@ -93,17 +87,20 @@ for row in nodes:
     for node in row:
         node.velocity_superfluid = initial_superfluid_density
 
+initial_heat_flux = 0
+for row in nodes:
+    for node in row:
+        node.velocity_superfluid = initial_heat_flux
+
 
 ############################
-# Assign boundary conditions
+# Assign Pressure Boundary conditions
 ############################
 for y in range(num_nodes_y):
     for x in range(num_nodes_x):
-        if y == 0:  # Bottom boundary
+        if x==0:
             nodes[y][x].heat_flux = 0.2
-            #nodes[y][x].temperature = 300
-
-        elif y == num_nodes_y - 1:  # Top boundary
+        elif x==num_nodes_y-1:
             nodes[y][x].heat_flux = 0.2
            
         if x == 0:  # Left boundary
@@ -123,11 +120,20 @@ for y in range(num_nodes_y):
         if y == 0 and (x != 0 and x != num_nodes_x - 1):
             print(nodes[y][x].heat_flux)
 
+#Top and Bottom Nodes
+T_avg = (nodes[y][x+1].temperature + nodes[y][x-1].temperature + nodes[y+1][x].temperature) / 3
+k = (((num_nodes_y*10**-3)*(nodes[y][x].density_superfluid + nodes[y][x].density_normal)*(nodes[y][x].entropy))**2)/(8*viscosity)
+Q_component = nodes[y][x].heat_flux
+T = T_avg + ((Q_component*timestep))*(((1*10**-3)**2)/(3*k))
+new_nodes[y][x].temperature = new_nodes[y][x].temperature + T
+
+
+            
 """
 ############################
 # Solve for Temperatures ###
 ############################
-timestep = 1000
+timestep = 1
 
 
 def temperature_averaging_step(nodes):
@@ -187,8 +193,6 @@ def temperature_averaging_step(nodes):
                 Q_component = nodes[y][x].heat_flux
                 T = T_avg + ((Q_component*timestep))*(((1*10**-3)**2)/(2*k))
                 new_nodes[y][x].temperature = new_nodes[y][x].temperature + T
-
-
 
 
 
@@ -273,7 +277,7 @@ def temperature_averaging_step(nodes):
 
 
 # Apply the temperature averaging step for multiple iterations
-iterations = 1000
+iterations = 2
  # Number of times we want to average temperatures
 for i in range(iterations):
     nodes = temperature_averaging_step(nodes)
