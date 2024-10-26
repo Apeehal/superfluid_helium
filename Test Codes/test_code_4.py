@@ -35,9 +35,9 @@ num_nodes_x = 6
 num_nodes_y = 4
 dx = dy = 0.001  # Spatial step (assuming uniform grid)
 dt = 1      # Time step size
-time_steps = 1  # Number of time steps
-q_top = 0.2  # Heat flux at the top boundary
-q_bottom = 0.2 # Heat flux at the bottom boundary
+time_steps = 2  # Number of time steps
+q_top = 20  # Heat flux at the top boundary
+q_bottom = 20 # Heat flux at the bottom boundary
 
 
 constant_superfluid_density = 162.9  # Superfluid density (constant across all nodes)
