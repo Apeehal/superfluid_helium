@@ -31,11 +31,11 @@ class Node:
         return alpha
 
 # Define grid dimensions
-num_nodes_x = 60
-num_nodes_y = 40
+num_nodes_x = 6
+num_nodes_y = 4
 dx = dy = 0.001  # Spatial step (assuming uniform grid)
 dt = 1      # Time step size
-time_steps = 10  # Number of time steps
+time_steps = 1  # Number of time steps
 q_top = 0.2  # Heat flux at the top boundary
 q_bottom = 0.2 # Heat flux at the bottom boundary
 
@@ -104,7 +104,7 @@ def fdm_step(nodes, dt, dx, dy):
 # Simulation loop for a number of time steps
 for step in range(time_steps):
     apply_neumann_bc(nodes, q_top, q_bottom)  # Apply boundary conditions first
-    nodes = fdm_step(nodes, dt, dx, dy)           # Then apply FDM to interior nodes
+    #nodes = fdm_step(nodes, dt, dx, dy)           # Then apply FDM to interior nodes
 
 
 

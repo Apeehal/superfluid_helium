@@ -8,7 +8,7 @@ dx = dy = 0.001  # Spatial step in the x direction
 q_top = 2  # Heat flux at the top boundary
 q_bottom = 2  # Heat flux at the bottom boundary
 dt = 0.01  # Time step
-num_timesteps = 500  # Total number of time steps
+num_timesteps = 1 # Total number of time steps
 
 # Node class
 class Node:
