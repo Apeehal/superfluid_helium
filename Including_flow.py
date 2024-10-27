@@ -215,9 +215,18 @@ def run_simulation():
 
     grad_T(nodes)
     grad_P(nodes)
-    v_s(nodes,dt)
+
+
     # Visualize the final temperature distribution
     visualize_results(nodes)
 
+
+"""
 # Run the simulation
+if dt < ((dy**4)/(a[-1]*(2)*(dx**2+dy**2))): # CFL convergence test
+    run_simulation()
+else:
+    print("Reduce step size")
+"""    
+
 run_simulation()
