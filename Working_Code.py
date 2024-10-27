@@ -8,9 +8,9 @@ num_nodes_x = 60  # Number of nodes in the x direction
 num_nodes_y = 40  # Number of nodes in the y direction
 dx = 0.001  # Spatial step in the x direction
 dy = 0.001  # Spatial step in the y direction
-q_top = 2  # Heat flux at the top boundary
-q_bottom = 2  # Heat flux at the bottom boundary
-dt = 0.00000001  # Time step for FDM update
+q_top = 0.2  # Heat flux at the top boundary
+q_bottom = 0.2  # Heat flux at the bottom boundary
+dt = 0.000000001  # Time step for FDM update
 num_timesteps = 100  # Total number of timesteps
 
 # Node class
@@ -95,16 +95,20 @@ def run_simulation():
         update_interior_nodes(nodes, dt)  # Update interior nodes based on FDM
     #print(nodes[0][0].temperature)
     # Visualize the final temperature distribution
+
+    
     visualize_results(nodes)
     save_results_to_csv(nodes)
     visualize_3d_surface(nodes)
 
 
 
+
 # Visualization function
 def visualize_results(nodes):
     temperatures = np.array([[node.temperature for node in row] for row in nodes])
-    
+
+
     plt.imshow(temperatures, cmap='hot', interpolation='nearest', vmin = np.min(temperatures), vmax = np.max(temperatures))
     plt.colorbar(label='Temperature (K)')
     plt.title(f'Temperature Distribution After {num_timesteps} Timesteps')
@@ -140,3 +144,5 @@ def visualize_3d_surface(nodes):
 
 # Run the simulation
 run_simulation()
+
+
