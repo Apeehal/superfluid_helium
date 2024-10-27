@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+from mpl_toolkits.mplot3d import Axes3D
 
 
 # Constants
@@ -95,13 +95,16 @@ def run_simulation():
         update_interior_nodes(nodes, dt)  # Update interior nodes based on FDM
     #print(nodes[0][0].temperature)
     # Visualize the final temperature distribution
-    plt.clf
     visualize_results(nodes)
-"""
+    save_results_to_csv(nodes)
+    visualize_3d_surface(nodes)
+
+
+
 # Visualization function
 def visualize_results(nodes):
     temperatures = np.array([[node.temperature for node in row] for row in nodes])
-
+    
     plt.imshow(temperatures, cmap='hot', interpolation='nearest', vmin = np.min(temperatures), vmax = np.max(temperatures))
     plt.colorbar(label='Temperature (K)')
     plt.title(f'Temperature Distribution After {num_timesteps} Timesteps')
@@ -109,7 +112,31 @@ def visualize_results(nodes):
     plt.ylabel('Y Nodes')
     plt.show()
 
+import pandas as pd
+
+def save_results_to_csv(nodes):
+    temperatures = np.array([[node.temperature for node in row] for row in nodes])
+    df = pd.DataFrame(temperatures)
+    df.to_csv('temperature_distribution.csv', index=False)
+    print("Temperature distribution saved to 'temperature_distribution.csv'.")
+
+
+def visualize_3d_surface(nodes):
+    temperatures = np.array([[node.temperature for node in row] for row in nodes])
+    
+    # Create a meshgrid for the X and Y coordinates
+    X, Y = np.meshgrid(np.arange(num_nodes_x), np.arange(num_nodes_y))
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    surf = ax.plot_surface(X, Y, temperatures, cmap='hot', edgecolor='none')
+    ax.set_xlabel('X Nodes')
+    ax.set_ylabel('Y Nodes')
+    ax.set_zlabel('Temperature (K)')
+    ax.set_title(f'Temperature Distribution After {num_timesteps} Timesteps')
+    fig.colorbar(surf, label='Temperature (K)')
+    plt.show()
+
+
 # Run the simulation
 run_simulation()
-
-"""
