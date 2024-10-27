@@ -170,18 +170,10 @@ def grad_P(nodes):
     return [grad_P_x, grad_P_y]
 
 def v_s(nodes, dt):
-    v_s = (((nodes.density_superfluid + nodes.density_normal)*(nodes.entropy)*grad_P(nodes) - (nodes.density_superfluid/(nodes.density_superfluid+nodes.density_normal)) * grad_P(nodes))*dt)/nodes.density_superfluid
-    print(v_s)
-    return v_s
-
-
-
-
-
-
-
-
-
+    v_s_x = (((nodes.density_superfluid + nodes.density_normal)*(nodes.entropy)*grad_P(nodes)[0] - (nodes.density_superfluid/(nodes.density_superfluid+nodes.density_normal)) * grad_P(nodes)[0])*dt)/nodes.density_superfluid
+    v_s_y = (((nodes.density_superfluid + nodes.density_normal)*(nodes.entropy)*grad_P(nodes)[1] - (nodes.density_superfluid/(nodes.density_superfluid+nodes.density_normal)) * grad_P(nodes)[1])*dt)/nodes.density_superfluid
+    print(v_s_x)
+    return [v_s_x, v_s_y]
 
 
 
@@ -215,7 +207,7 @@ def run_simulation():
 
     grad_T(nodes)
     grad_P(nodes)
-
+    v_s(nodes, dt)
 
     # Visualize the final temperature distribution
     visualize_results(nodes)
