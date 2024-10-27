@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 
 # Constants
@@ -23,8 +22,30 @@ class Node:
         self.density_normal = density_normal
         self.entropy = entropy
         self.viscosity = viscosity
-        self.k = self.calculate_k()
-        self.alpha = self.calculate_alpha()
+
+    def update_properties(self):
+        # Update properties based on the current temperature
+        self.density_superfluid = self.calculate_density_superfluid()
+        print(self.density_superfluid)
+        self.density_normal = self.calculate_density_normal()
+        self.entropy = self.calculate_entropy()
+        self.viscosity = self.calculate_viscosity()
+
+    def calculate_density_superfluid(self):
+        # Example: Simple relationship; modify based on your system
+        return (self.temperature)  # Adjust as needed
+
+    def calculate_density_normal(self):
+        # Example: Simple relationship; modify based on your system
+        return (self.temperature)  # Adjust as needed
+
+    def calculate_entropy(self):
+        # Example: Simple relationship; modify based on your system
+        return (self.temperature)  # Adjust as needed
+
+    def calculate_viscosity(self):
+        # Example: Simple relationship; modify based on your system
+        return (self.temperature)  # Adjust as needed
 
     def calculate_k(self):
         L = num_nodes_y * (dy**2)  # Length of the grid in meters
@@ -35,7 +56,7 @@ class Node:
     def calculate_alpha(self):
         c_p = 5000  # Specific heat constant
         total_density = self.density_superfluid + self.density_normal
-        alpha = self.k / (total_density * c_p)
+        alpha = self.calculate_k() / (total_density * c_p)
         return alpha
 
 # Initialize the grid with uniform temperature
@@ -54,87 +75,29 @@ def apply_neumann_bc_boundary_only(nodes, q_top, q_bottom, dy):
     # Top boundary
     for x in range(num_nodes_x):
         T_interior = nodes[1][x].temperature  # First interior node below the boundary
-        k_local = nodes[0][x].k  # Use local k value for boundary node
+        k_local = nodes[0][x].calculate_k()  # Use local k value for boundary node
         nodes[0][x].temperature = T_interior + (q_top * dy) / k_local  # Apply Neumann BC for top boundary
-        #print(nodes[1][1].temperature)
 
     # Bottom boundary
     for x in range(num_nodes_x):
         T_interior = nodes[num_nodes_y - 2][x].temperature  # First interior node above the boundary
-        k_local = nodes[num_nodes_y - 1][x].k  # Use local k value for boundary node
+        k_local = nodes[num_nodes_y - 1][x].calculate_k()  # Use local k value for boundary node
         nodes[num_nodes_y - 1][x].temperature = T_interior + (q_bottom * dy) / k_local  # Apply Neumann BC for bottom boundary
 
 # Update interior nodes based on the FDM method
 def update_interior_nodes(nodes, dt):
     new_temperatures = np.array([[node.temperature for node in row] for row in nodes])
-    
 
     for y in range(1, num_nodes_y - 1):
         for x in range(1, num_nodes_x - 1):
             T_xx = (nodes[y][x + 1].temperature - 2 * nodes[y][x].temperature + nodes[y][x - 1].temperature) / (dx ** 2)
             T_yy = (nodes[y + 1][x].temperature - 2 * nodes[y][x].temperature + nodes[y - 1][x].temperature) / (dy ** 2)
-            alpha = nodes[y][x].alpha
+            alpha = nodes[y][x].calculate_alpha()
             new_temperatures[y][x] += alpha * (T_xx + T_yy) * dt  # Update using alpha and FDM
+
     for y in range(1, num_nodes_y - 1):
         for x in range(1, num_nodes_x - 1):
             nodes[y][x].temperature = new_temperatures[y][x]
-
-    for y in range(num_nodes_y):
-        nodes[y][0].temperature = nodes[y][1].temperature  # Left boundary (no flux)
-        nodes[y][num_nodes_x - 1].temperature = nodes[y][num_nodes_x - 2].temperature  # Right boundary (no flux)
-
-
-# Visualization function
-def visualize_results(nodes):
-    temperatures = np.array([[node.temperature for node in row] for row in nodes])
-
-
-    plt.imshow(temperatures, cmap='hot', interpolation='nearest', vmin = np.min(temperatures), vmax = np.max(temperatures))
-    plt.colorbar(label='Temperature (K)')
-    plt.title(f'Temperature Distribution After {num_timesteps} Timesteps')
-    plt.xlabel('X Nodes')
-    plt.ylabel('Y Nodes')
-    plt.show()
-
-import pandas as pd
-
-def save_results_to_csv(nodes):
-    temperatures = np.array([[node.temperature for node in row] for row in nodes])
-    df = pd.DataFrame(temperatures)
-    df.to_csv('temperature_distribution.csv', index=False)
-    print("Temperature distribution saved to 'temperature_distribution.csv'.")
-
-
-def visualize_3d_surface(nodes):
-    temperatures = np.array([[node.temperature for node in row] for row in nodes])
-    
-    # Create a meshgrid for the X and Y coordinates
-    X, Y = np.meshgrid(np.arange(num_nodes_x), np.arange(num_nodes_y))
-    
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    surf = ax.plot_surface(X, Y, temperatures, cmap='hot', edgecolor='none')
-    ax.set_xlabel('X Nodes')
-    ax.set_ylabel('Y Nodes')
-    ax.set_zlabel('Temperature (K)')
-    ax.set_title(f'Temperature Distribution After {num_timesteps} Timesteps')
-    fig.colorbar(surf, label='Temperature (K)')
-    plt.show()
-
-
-
-
-def grad_T(nodes):
-    temperatures = np.array([[node.temperature for node in row] for row in nodes])
-    gradient = np.gradient(temperatures)
-    gradient_x, gradient_y = gradient
-    return gradient_x, gradient_y
-
-
-
-
-
-
 
 # Main simulation function
 def run_simulation():
@@ -144,17 +107,24 @@ def run_simulation():
     for t in range(num_timesteps):
         apply_neumann_bc_boundary_only(nodes, q_top, q_bottom, dy)  # Update boundary nodes
         update_interior_nodes(nodes, dt)  # Update interior nodes based on FDM
-    #print(nodes[0][0].temperature)
+
+        # Update properties for each node based on the new temperature after updating temperatures
+        for row in nodes:
+            for node in row:
+                node.update_properties()
+
     # Visualize the final temperature distribution
-
-
     visualize_results(nodes)
-    save_results_to_csv(nodes)
-    grad_T(nodes)
-    #visualize_3d_surface(nodes)
 
+# Visualization function
+def visualize_results(nodes):
+    temperatures = np.array([[node.temperature for node in row] for row in nodes])
+    plt.imshow(temperatures, cmap='hot', interpolation='nearest')
+    plt.colorbar(label='Temperature (K)')
+    plt.title(f'Temperature Distribution After {num_timesteps} Timesteps')
+    plt.xlabel('X Nodes')
+    plt.ylabel('Y Nodes')
+    plt.show()
 
 # Run the simulation
 run_simulation()
-
-
